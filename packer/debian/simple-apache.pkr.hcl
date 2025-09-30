@@ -56,7 +56,7 @@ build {
 
   # Run Ansible playbook
   provisioner "ansible" {
-    playbook_file = "../ansible/simple-playbook.yml"
+    playbook_file = "../../ansible/debian/simple-playbook.yml"
     extra_arguments = [
       "--extra-vars", "ansible_python_interpreter=/usr/bin/python3"
     ]
