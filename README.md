@@ -1,5 +1,12 @@
 # Simple Golden Image on Google Cloud (Packer + Ansible + Terraform)
 
+## Architecture - Personal Packer GCP MIG
+
+![Architecture Diagram](Architecture-%20Personal%20-%20PAcker%20GCP%20MIG.png)
+
+**Architecture Overview:**
+This visual representation shows how you can build a CI/CD pipeline to automate different use cases for image building - from standalone VM images to Managed Instance Group (MIG) deployments. The architecture supports both manual single VM deployments and auto-scaling MIG configurations using the same hardened golden image.
+
 A minimal workflow to build a Debian-based golden image with Apache and Google Cloud Ops Agent, then deploy a VM on GCP.
 
 ## What this project does
