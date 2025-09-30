@@ -85,3 +85,59 @@ A minimal workflow to build a Debian-based golden image with Apache and Google C
 - Terraform uses the latest image from the image family `apache-simple` created by Packer.
 - External IP + HTTP firewall are enabled for a simple POC. Adjust for your org’s policies as needed.
 - If you change Ops Agent config, rebuild the image to bake it in.
+
+## CIS Level 2 Hardening
+This project now includes CIS (Center for Internet Security) Level 2 hardening based on the CIS Debian Linux 11 Benchmark v1.0.0.
+
+### Security Features Applied
+- **Filesystem Security**: Disabled unnecessary filesystem types (cramfs, freevxfs, jffs2, hfs, hfsplus, udf)
+- **File Integrity**: AIDE installed with daily integrity checks
+- **Network Security**: Disabled IPv6, configured secure network parameters, enabled SYN cookies
+- **Service Hardening**: Removed unnecessary services (X11, Avahi, CUPS, DHCP, LDAP, NFS, DNS, FTP, Samba, SNMP)
+- **SSH Hardening**: Secure SSH configuration with strong ciphers, disabled root login, connection limits
+- **Password Policy**: Strong password requirements (14+ chars, complexity rules)
+- **Audit Logging**: auditd configured for comprehensive system auditing
+- **Access Control**: Proper file permissions on critical system files
+- **Intrusion Prevention**: Fail2Ban configured for SSH and Apache protection
+- **System Accounts**: Secured system accounts with nologin shells
+
+### Ansible Role: CIS Hardening
+- **Location**: `ansible/roles/cis_hardening/`
+- **Tasks**: `tasks/main.yml` - Implements 50+ CIS Level 2 controls
+- **Templates**: 
+  - `sshd_config.j2` - Hardened SSH configuration
+  - `pwquality.conf.j2` - Password complexity requirements
+  - `securetty.j2` - Root login restrictions
+  - `jail.local.j2` - Fail2Ban configuration
+- **Handlers**: Service restart handlers for SSH, Fail2Ban, GRUB updates
+
+### Build Order
+The playbook now applies hardening in this order:
+1. **CIS Hardening** - Security baseline first
+2. **Ops Agent** - Monitoring after security is applied
+3. **Apache** - Application services last
+
+### Compliance
+This implementation addresses key CIS Level 2 controls including:
+- CIS 1.x: Filesystem Configuration
+- CIS 2.x: Services Configuration  
+- CIS 3.x: Network Configuration
+- CIS 4.x: Logging and Auditing
+- CIS 5.x: Access, Authentication and Authorization
+- CIS 6.x: System Maintenance
+
+### Testing Hardening
+After deployment, you can verify hardening with:
+```bash
+# Check SSH configuration
+ssh -o PreferredAuthentications=password user@instance_ip  # Should fail
+
+# Check fail2ban status
+sudo fail2ban-client status
+
+# Check audit daemon
+sudo systemctl status auditd
+
+# Check disabled services
+systemctl list-unit-files | grep disabled
+```

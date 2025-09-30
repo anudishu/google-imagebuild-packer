@@ -1,0 +1,447 @@
+---
+# CIS Level 2 Hardening for Debian/Ubuntu
+# Based on CIS Debian Linux 11 Benchmark v1.0.0
+
+- name: CIS 1.1.1.1 - Ensure mounting of cramfs filesystems is disabled
+  lineinfile:
+    path: /etc/modprobe.d/CIS.conf
+    line: "install cramfs /bin/true"
+    create: yes
+    mode: '0644'
+
+- name: CIS 1.1.1.2 - Ensure mounting of freevxfs filesystems is disabled
+  lineinfile:
+    path: /etc/modprobe.d/CIS.conf
+    line: "install freevxfs /bin/true"
+    create: yes
+    mode: '0644'
+
+- name: CIS 1.1.1.3 - Ensure mounting of jffs2 filesystems is disabled
+  lineinfile:
+    path: /etc/modprobe.d/CIS.conf
+    line: "install jffs2 /bin/true"
+    create: yes
+    mode: '0644'
+
+- name: CIS 1.1.1.4 - Ensure mounting of hfs filesystems is disabled
+  lineinfile:
+    path: /etc/modprobe.d/CIS.conf
+    line: "install hfs /bin/true"
+    create: yes
+    mode: '0644'
+
+- name: CIS 1.1.1.5 - Ensure mounting of hfsplus filesystems is disabled
+  lineinfile:
+    path: /etc/modprobe.d/CIS.conf
+    line: "install hfsplus /bin/true"
+    create: yes
+    mode: '0644'
+
+- name: CIS 1.1.1.6 - Ensure mounting of udf filesystems is disabled
+  lineinfile:
+    path: /etc/modprobe.d/CIS.conf
+    line: "install udf /bin/true"
+    create: yes
+    mode: '0644'
+
+- name: CIS 1.3.1 - Ensure AIDE is installed
+  apt:
+    name: aide
+    state: present
+
+- name: CIS 1.3.2 - Ensure filesystem integrity is regularly checked
+  cron:
+    name: "Run AIDE integrity check"
+    minute: "0"
+    hour: "5"
+    job: "/usr/bin/aide --check"
+    user: root
+
+- name: CIS 1.4.1 - Ensure permissions on bootloader config are configured
+  file:
+    path: /boot/grub/grub.cfg
+    owner: root
+    group: root
+    mode: '0400'
+  ignore_errors: yes
+
+- name: CIS 1.5.1 - Ensure core dumps are restricted
+  lineinfile:
+    path: /etc/security/limits.conf
+    line: "* hard core 0"
+    create: yes
+
+- name: CIS 1.5.3 - Ensure address space layout randomization (ASLR) is enabled
+  sysctl:
+    name: kernel.randomize_va_space
+    value: '2'
+    state: present
+    reload: yes
+
+- name: CIS 2.1.1 - Ensure xinetd is not installed
+  apt:
+    name: xinetd
+    state: absent
+
+- name: CIS 2.1.2 - Ensure openbsd-inetd is not installed
+  apt:
+    name: openbsd-inetd
+    state: absent
+
+- name: CIS 2.2.1 - Ensure X Window System is not installed
+  apt:
+    name: xserver-xorg*
+    state: absent
+
+- name: CIS 2.2.2 - Ensure Avahi Server is not installed
+  apt:
+    name: avahi-daemon
+    state: absent
+
+- name: CIS 2.2.3 - Ensure CUPS is not installed
+  apt:
+    name: cups
+    state: absent
+
+- name: CIS 2.2.4 - Ensure DHCP Server is not installed
+  apt:
+    name: isc-dhcp-server
+    state: absent
+
+- name: CIS 2.2.5 - Ensure LDAP server is not installed
+  apt:
+    name: slapd
+    state: absent
+
+- name: CIS 2.2.6 - Ensure NFS is not installed
+  apt:
+    name: nfs-kernel-server
+    state: absent
+
+- name: CIS 2.2.7 - Ensure DNS Server is not installed
+  apt:
+    name: bind9
+    state: absent
+
+- name: CIS 2.2.8 - Ensure FTP Server is not installed
+  apt:
+    name: vsftpd
+    state: absent
+
+- name: CIS 2.2.9 - Ensure HTTP server is not installed (skip for Apache)
+  debug:
+    msg: "Skipping HTTP server removal as Apache is required"
+
+- name: CIS 2.2.10 - Ensure IMAP and POP3 server are not installed
+  apt:
+    name: "{{ item }}"
+    state: absent
+  loop:
+    - dovecot-imapd
+    - dovecot-pop3d
+
+- name: CIS 2.2.11 - Ensure Samba is not installed
+  apt:
+    name: samba
+    state: absent
+
+- name: CIS 2.2.12 - Ensure HTTP Proxy Server is not installed
+  apt:
+    name: squid
+    state: absent
+
+- name: CIS 2.2.13 - Ensure SNMP Server is not installed
+  apt:
+    name: snmpd
+    state: absent
+
+- name: CIS 3.1.1 - Disable IPv6 (if not needed)
+  sysctl:
+    name: "{{ item }}"
+    value: '1'
+    state: present
+    reload: yes
+  loop:
+    - net.ipv6.conf.all.disable_ipv6
+    - net.ipv6.conf.default.disable_ipv6
+    - net.ipv6.conf.lo.disable_ipv6
+
+- name: CIS 3.2.1 - Ensure source routed packets are not accepted
+  sysctl:
+    name: "{{ item }}"
+    value: '0'
+    state: present
+    reload: yes
+  loop:
+    - net.ipv4.conf.all.accept_source_route
+    - net.ipv4.conf.default.accept_source_route
+
+- name: CIS 3.2.2 - Ensure ICMP redirects are not accepted
+  sysctl:
+    name: "{{ item }}"
+    value: '0'
+    state: present
+    reload: yes
+  loop:
+    - net.ipv4.conf.all.accept_redirects
+    - net.ipv4.conf.default.accept_redirects
+
+- name: CIS 3.2.3 - Ensure secure ICMP redirects are not accepted
+  sysctl:
+    name: "{{ item }}"
+    value: '0'
+    state: present
+    reload: yes
+  loop:
+    - net.ipv4.conf.all.secure_redirects
+    - net.ipv4.conf.default.secure_redirects
+
+- name: CIS 3.2.4 - Ensure suspicious packets are logged
+  sysctl:
+    name: "{{ item }}"
+    value: '1'
+    state: present
+    reload: yes
+  loop:
+    - net.ipv4.conf.all.log_martians
+    - net.ipv4.conf.default.log_martians
+
+- name: CIS 3.2.5 - Ensure broadcast ICMP requests are ignored
+  sysctl:
+    name: net.ipv4.icmp_echo_ignore_broadcasts
+    value: '1'
+    state: present
+    reload: yes
+
+- name: CIS 3.2.6 - Ensure bogus ICMP responses are ignored
+  sysctl:
+    name: net.ipv4.icmp_ignore_bogus_error_responses
+    value: '1'
+    state: present
+    reload: yes
+
+- name: CIS 3.2.7 - Ensure Reverse Path Filtering is enabled
+  sysctl:
+    name: "{{ item }}"
+    value: '1'
+    state: present
+    reload: yes
+  loop:
+    - net.ipv4.conf.all.rp_filter
+    - net.ipv4.conf.default.rp_filter
+
+- name: CIS 3.2.8 - Ensure TCP SYN Cookies is enabled
+  sysctl:
+    name: net.ipv4.tcp_syncookies
+    value: '1'
+    state: present
+    reload: yes
+
+- name: CIS 4.1.1.1 - Ensure auditd is installed
+  apt:
+    name: "{{ item }}"
+    state: present
+  loop:
+    - auditd
+    - audispd-plugins
+
+- name: CIS 4.1.1.2 - Ensure auditd service is enabled
+  systemd:
+    name: auditd
+    enabled: yes
+    state: started
+
+- name: CIS 4.1.1.3 - Ensure auditing for processes that start prior to auditd is enabled
+  lineinfile:
+    path: /etc/default/grub
+    regexp: '^GRUB_CMDLINE_LINUX='
+    line: 'GRUB_CMDLINE_LINUX="audit=1"'
+    backup: yes
+  notify: update grub
+
+- name: CIS 5.1.1 - Ensure cron daemon is enabled
+  systemd:
+    name: cron
+    enabled: yes
+    state: started
+
+- name: CIS 5.1.2 - Ensure permissions on /etc/crontab are configured
+  file:
+    path: /etc/crontab
+    owner: root
+    group: root
+    mode: '0600'
+
+- name: CIS 5.1.3 - Ensure permissions on /etc/cron.hourly are configured
+  file:
+    path: /etc/cron.hourly
+    owner: root
+    group: root
+    mode: '0700'
+
+- name: CIS 5.1.4 - Ensure permissions on /etc/cron.daily are configured
+  file:
+    path: /etc/cron.daily
+    owner: root
+    group: root
+    mode: '0700'
+
+- name: CIS 5.1.5 - Ensure permissions on /etc/cron.weekly are configured
+  file:
+    path: /etc/cron.weekly
+    owner: root
+    group: root
+    mode: '0700'
+
+- name: CIS 5.1.6 - Ensure permissions on /etc/cron.monthly are configured
+  file:
+    path: /etc/cron.monthly
+    owner: root
+    group: root
+    mode: '0700'
+
+- name: CIS 5.1.7 - Ensure permissions on /etc/cron.d are configured
+  file:
+    path: /etc/cron.d
+    owner: root
+    group: root
+    mode: '0700'
+
+- name: CIS 5.2.1 - Ensure permissions on /etc/ssh/sshd_config are configured
+  file:
+    path: /etc/ssh/sshd_config
+    owner: root
+    group: root
+    mode: '0600'
+
+- name: CIS 5.2.2 - Ensure SSH access is limited
+  template:
+    src: sshd_config.j2
+    dest: /etc/ssh/sshd_config
+    owner: root
+    group: root
+    mode: '0600'
+    backup: yes
+  notify: restart ssh
+
+- name: CIS 5.3.1 - Ensure password creation requirements are configured
+  template:
+    src: pwquality.conf.j2
+    dest: /etc/security/pwquality.conf
+    owner: root
+    group: root
+    mode: '0644'
+    backup: yes
+
+- name: CIS 5.4.1.1 - Ensure password expiration is 365 days or less
+  lineinfile:
+    path: /etc/login.defs
+    regexp: '^PASS_MAX_DAYS'
+    line: 'PASS_MAX_DAYS 90'
+
+- name: CIS 5.4.1.2 - Ensure minimum days between password changes is configured
+  lineinfile:
+    path: /etc/login.defs
+    regexp: '^PASS_MIN_DAYS'
+    line: 'PASS_MIN_DAYS 1'
+
+- name: CIS 5.4.1.3 - Ensure password expiration warning days is 7 or more
+  lineinfile:
+    path: /etc/login.defs
+    regexp: '^PASS_WARN_AGE'
+    line: 'PASS_WARN_AGE 7'
+
+- name: CIS 5.4.2 - Ensure system accounts are secured
+  shell: |
+    for user in `awk -F: '($3 < 1000) {print $1 }' /etc/passwd`; do
+      if [ $user != "root" ]; then
+        usermod -L $user
+        if [ $user != "sync" ] && [ $user != "shutdown" ] && [ $user != "halt" ]; then
+          usermod -s /usr/sbin/nologin $user
+        fi
+      fi
+    done
+
+- name: CIS 5.5 - Ensure root login is restricted to system console
+  template:
+    src: securetty.j2
+    dest: /etc/securetty
+    owner: root
+    group: root
+    mode: '0600'
+
+- name: CIS 6.1.2 - Ensure permissions on /etc/passwd are configured
+  file:
+    path: /etc/passwd
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: CIS 6.1.3 - Ensure permissions on /etc/shadow are configured
+  file:
+    path: /etc/shadow
+    owner: root
+    group: shadow
+    mode: '0640'
+
+- name: CIS 6.1.4 - Ensure permissions on /etc/group are configured
+  file:
+    path: /etc/group
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: CIS 6.1.5 - Ensure permissions on /etc/gshadow are configured
+  file:
+    path: /etc/gshadow
+    owner: root
+    group: shadow
+    mode: '0640'
+
+- name: CIS 6.1.6 - Ensure permissions on /etc/passwd- are configured
+  file:
+    path: /etc/passwd-
+    owner: root
+    group: root
+    mode: '0600'
+
+- name: CIS 6.1.7 - Ensure permissions on /etc/shadow- are configured
+  file:
+    path: /etc/shadow-
+    owner: root
+    group: shadow
+    mode: '0600'
+
+- name: CIS 6.1.8 - Ensure permissions on /etc/group- are configured
+  file:
+    path: /etc/group-
+    owner: root
+    group: root
+    mode: '0600'
+
+- name: CIS 6.1.9 - Ensure permissions on /etc/gshadow- are configured
+  file:
+    path: /etc/gshadow-
+    owner: root
+    group: shadow
+    mode: '0600'
+
+- name: Install fail2ban for additional security
+  apt:
+    name: fail2ban
+    state: present
+
+- name: Configure fail2ban
+  template:
+    src: jail.local.j2
+    dest: /etc/fail2ban/jail.local
+    owner: root
+    group: root
+    mode: '0644'
+  notify: restart fail2ban
+
+- name: Enable and start fail2ban
+  systemd:
+    name: fail2ban
+    enabled: yes
+    state: started

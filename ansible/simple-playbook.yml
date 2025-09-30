@@ -1,5 +1,5 @@
 ---
-- name: Simple Apache Setup with Ops Agent
+- name: Simple Apache Setup with Ops Agent and CIS Level 2 Hardening
   hosts: all
   become: yes
 
@@ -24,10 +24,17 @@
         content: |
           <!DOCTYPE html>
           <html>
-          <head><title>Simple Apache</title></head>
+          <head><title>Simple Apache - CIS Hardened</title></head>
           <body>
             <h1>Hello from Apache!</h1>
-            <p>This is a simple Apache server running on a golden image.</p>
+            <p>This is a simple Apache server running on a CIS Level 2 hardened golden image.</p>
+            <p><strong>Security Features:</strong></p>
+            <ul>
+              <li>CIS Level 2 Hardening Applied</li>
+              <li>Google Cloud Ops Agent Monitoring</li>
+              <li>Fail2Ban Intrusion Prevention</li>
+              <li>Audit Logging Enabled</li>
+            </ul>
           </body>
           </html>
         dest: /var/www/html/index.html
@@ -56,4 +63,5 @@
         mode: '0755'
 
   roles:
+    - role: cis_hardening
     - role: ops_agent
