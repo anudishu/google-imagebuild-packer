@@ -100,26 +100,4 @@ jobs:
           gcloud compute images add-labels ${{ steps.build.outputs.image_name }} \
             --labels=git-commit=${{ github.sha }},ci-build=true,os=windows,cis-level=2
 
-  trigger-terraform:
-    name: 🚀 Trigger Terraform Deployment
-    runs-on: ubuntu-latest
-    needs: build
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    steps:
-      - name: Trigger Terraform Windows workflow
-        uses: actions/github-script@v7
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            await github.rest.actions.createWorkflowDispatch({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              workflow_id: 'terraform-windows.yml',
-              ref: 'main',
-              inputs: {
-                image_name: '${{ needs.build.outputs.image_name }}',
-                triggered_by: 'packer-build',
-                action: 'apply'
-              }
-            });
-            console.log('🚀 Triggered Terraform deployment for Windows');
+
