@@ -1,0 +1,17 @@
+# Ops Agent minimal config managed by Ansible
+# Reference: https://cloud.google.com/monitoring/agent/ops-agent/installation
+
+logging:
+  service:
+    pipelines: {}
+
+metrics:
+  receivers:
+    hostmetrics:
+      type: hostmetrics
+      collection_interval: 60s
+      scrapers: [cpu, memory, disk, network]
+  service:
+    pipelines:
+      default_pipeline:
+        receivers: [hostmetrics]

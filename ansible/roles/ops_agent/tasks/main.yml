@@ -1,0 +1,20 @@
+---
+# Role: ops_agent - Simple installation only
+# Just installs Google Cloud Ops Agent and ensures it's running
+
+- name: Download Ops Agent repo install script
+  get_url:
+    url: https://dl.google.com/cloudagents/add-google-cloud-ops-agent-repo.sh
+    dest: /tmp/add-google-cloud-ops-agent-repo.sh
+    mode: '0755'
+
+- name: Register Ops Agent repo and install agent
+  command: bash /tmp/add-google-cloud-ops-agent-repo.sh --also-install
+  args:
+    creates: /etc/systemd/system/google-cloud-ops-agent.service
+
+- name: Ensure Ops Agent is enabled and running
+  systemd:
+    name: google-cloud-ops-agent
+    enabled: yes
+    state: started

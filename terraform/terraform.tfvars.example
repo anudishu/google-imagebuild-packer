@@ -1,0 +1,17 @@
+# Copy this file to terraform.tfvars and update the values
+
+# Required variables
+project_id = "your-gcp-project-id"
+
+# Optional variables (uncomment and modify as needed)
+# region = "us-central1"
+# zone = "us-central1-a"
+# environment = "prod"
+# image_family = "apache-golden"
+# machine_type = "e2-medium"
+# instance_count = 2
+# disk_size = 20
+# disk_type = "pd-standard"
+# subnet_cidr = "10.0.1.0/24"
+# ssh_source_ranges = ["0.0.0.0/0"]
+# enable_cdn = false

@@ -1,0 +1,59 @@
+---
+- name: Simple Apache Setup with Ops Agent
+  hosts: all
+  become: yes
+
+  tasks:
+    - name: Update system
+      apt:
+        update_cache: yes
+
+    - name: Install Apache
+      apt:
+        name: apache2
+        state: present
+
+    - name: Start and enable Apache
+      systemd:
+        name: apache2
+        enabled: yes
+        state: started
+
+    - name: Create simple index page
+      copy:
+        content: |
+          <!DOCTYPE html>
+          <html>
+          <head><title>Simple Apache</title></head>
+          <body>
+            <h1>Hello from Apache!</h1>
+            <p>This is a simple Apache server running on a golden image.</p>
+          </body>
+          </html>
+        dest: /var/www/html/index.html
+        mode: '0644'
+
+    - name: Install basic monitoring tools
+      apt:
+        name:
+          - htop
+          - curl
+          - wget
+        state: present
+
+    - name: Create health check script
+      copy:
+        content: |
+          #!/bin/bash
+          if systemctl is-active --quiet apache2; then
+            echo "Apache is running"
+            exit 0
+          else
+            echo "Apache is not running"
+            exit 1
+          fi
+        dest: /usr/local/bin/health-check.sh
+        mode: '0755'
+
+  roles:
+    - role: ops_agent
