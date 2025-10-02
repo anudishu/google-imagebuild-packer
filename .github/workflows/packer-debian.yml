@@ -6,13 +6,11 @@ on:
     paths:
       - 'packer/debian/**'
       - 'ansible/debian/**'
-      - '.github/workflows/packer-debian.yml'
   push:
     branches: [ main ]
     paths:
       - 'packer/debian/**'
       - 'ansible/debian/**'
-      - '.github/workflows/packer-debian.yml'
   workflow_dispatch:
 
 env:

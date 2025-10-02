@@ -5,12 +5,10 @@ on:
     branches: [ main ]
     paths:
       - 'terraform/debian/**'
-      - '.github/workflows/terraform-debian.yml'
   push:
     branches: [ main ]
     paths:
       - 'terraform/debian/**'
-      - '.github/workflows/terraform-debian.yml'
   workflow_dispatch:
     inputs:
       action:

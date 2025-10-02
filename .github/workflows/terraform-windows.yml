@@ -5,12 +5,10 @@ on:
     branches: [ main ]
     paths:
       - 'terraform/windows/**'
-      - '.github/workflows/terraform-windows.yml'
   push:
     branches: [ main ]
     paths:
       - 'terraform/windows/**'
-      - '.github/workflows/terraform-windows.yml'
   workflow_dispatch:
     inputs:
       action:

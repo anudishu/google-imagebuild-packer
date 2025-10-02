@@ -6,13 +6,11 @@ on:
     paths:
       - 'packer/windows/**'
       - 'ansible/windows/**'
-      - '.github/workflows/packer-windows.yml'
   push:
     branches: [ main ]
     paths:
       - 'packer/windows/**'
       - 'ansible/windows/**'
-      - '.github/workflows/packer-windows.yml'
   workflow_dispatch:
 
 env:
