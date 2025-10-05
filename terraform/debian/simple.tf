@@ -78,3 +78,4 @@ output "instance_ip" {
 output "instance_url" {
   value = "http://${google_compute_instance.apache.network_interface[0].access_config[0].nat_ip}"
 }
+      
