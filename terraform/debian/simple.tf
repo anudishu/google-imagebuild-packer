@@ -23,9 +23,9 @@ variable "zone" {
   default     = "us-central1-a"
 }
 
-# Get the latest image from family
+# Get the specific image created by Packer
 data "google_compute_image" "apache" {
-  family  = "apache-simple"
+  name    = "apache-simple-sumitk"
   project = var.project_id
 }
 
