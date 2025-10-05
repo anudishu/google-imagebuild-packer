@@ -172,3 +172,4 @@ jobs:
           echo "💥 Destroying Terraform resources..."
           terraform destroy -auto-approve
           echo "✅ Resources destroyed"
+     
