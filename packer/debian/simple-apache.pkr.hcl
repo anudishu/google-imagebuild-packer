@@ -25,7 +25,7 @@ variable "zone" {
 
 source "googlecompute" "apache" {
   project_id          = var.project_id
-  source_image        = "debian-11-bullseye-v20250915"
+  source_image        = "debian-11-bullseye-v20250915"  #baseOS
   zone                = var.zone
   machine_type        = "e2-small"
   image_name          = "apache-simple-sumitk"
