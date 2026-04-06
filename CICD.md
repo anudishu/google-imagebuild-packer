@@ -1,6 +1,6 @@
 # CI notes
 
-Repository is proprietary; see root `NOTICE`. GitHub Actions live under `.github/workflows/`. Each workflow is scoped to path changes (e.g. `terraform/rhel8/**`).
+Personal repo — proprietary statement in root `NOTICE`. GitHub Actions live under `.github/workflows/`. Each workflow is scoped to path changes (e.g. `terraform/rhel8/**`).
 
 - Packer workflows: mostly `packer init` + `packer validate` + ansible syntax-check. Add a build step if you want images built in CI.
 - Terraform workflows: fmt check, init, validate, plan on PR; apply on push to `main` or manual dispatch (see yaml for destroy).

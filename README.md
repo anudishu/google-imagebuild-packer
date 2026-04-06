@@ -2,7 +2,7 @@
 
 ## Proprietary
 
-This repository is **proprietary and confidential**. It is for **authorized internal use only**. Do not redistribute or publish without written approval from the owning organization. Full wording is in [`NOTICE`](NOTICE).
+This is a **personal** repository (individual maintainer, not a company org repo unless you fork it into one). Contents are **proprietary and confidential** to the author. Do not redistribute or publish without the author’s written permission. Full wording is in [`NOTICE`](NOTICE).
 
 ## End-to-end scope
 
