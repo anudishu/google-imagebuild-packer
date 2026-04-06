@@ -1,0 +1,41 @@
+name: Packer - RHEL 7 httpd image
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "packer/rhel7/**"
+      - "ansible/rhel7/**"
+  push:
+    branches: [main]
+    paths:
+      - "packer/rhel7/**"
+      - "ansible/rhel7/**"
+  workflow_dispatch:
+
+env:
+  GCP_PROJECT_ID: root-cortex-465610-p8
+
+jobs:
+  validate:
+    name: Validate Packer + Ansible (RHEL 7)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: hashicorp/setup-packer@main
+
+      - name: Install Ansible for syntax-check
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq ansible
+
+      - name: packer init + validate
+        run: |
+          cd packer/rhel7
+          packer init httpd.pkr.hcl
+          packer validate .
+
+      - name: ansible syntax-check
+        run: |
+          ansible-playbook --syntax-check ansible/rhel7/playbook.yml

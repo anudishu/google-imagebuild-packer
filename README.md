@@ -1,119 +1,142 @@
-# Multi-OS Golden Image Builder (Packer + Ansible + Terraform)
+# Golden images on GCP (Packer + Ansible + Terraform)
 
-![Architecture Diagram](Architecture.png)
+## Proprietary
 
-Build hardened golden images for Debian 11 and Windows Server 2016 with CIS Level 2 security controls, then deploy VMs on GCP.
+This repository is **proprietary and confidential**. It is for **authorized internal use only**. Do not redistribute or publish without written approval from the owning organization. Full wording is in [`NOTICE`](NOTICE).
 
-## 📦 Project Structure
+## End-to-end scope
+
+This is a complete delivery path on Google Cloud, not a snippet library:
+
+1. **Image build** — Packer launches a builder VM, runs Ansible (Linux) or PowerShell (Windows), and publishes a **golden image** in your project.
+2. **Infrastructure** — Terraform creates a small footprint: firewall rule, service account, and a **VM booted from that image**.
+3. **Verification** — You hit the VM on port 80 (or RDP for Windows). Locally, `make validate` runs formatter checks, `terraform validate`, `packer validate`, and Ansible syntax-check before you push.
+4. **Automation** — GitHub Actions workflows mirror those checks per OS path; Terraform can plan/apply in CI when wired to your secrets.
+
+High-level diagram: **`Architecture.png`** (in repo root).
+
+Supported OS tracks (each has its own `packer/`, `ansible/` or `ps1`, `terraform/`, and workflow files): **Debian 11**, **RHEL 7/8/9**, **CentOS 7**, **Windows Server 2016**.
+
+## Repository layout
 
 ```
-📦 Multi-OS Golden Image Builder
-├── 🐧 packer/debian/          # Debian 11 + Apache + CIS L2
-├── 🪟 packer/windows/         # Windows 2016 + IIS + CIS L2  
-├── 🔧 ansible/debian/         # Debian hardening & apps
-├── 🔧 ansible/windows/        # Windows hardening & apps
-├── 🚀 terraform/debian/       # Debian VM deployment
-├── 🚀 terraform/windows/      # Windows VM deployment
-├── 📋 build-selector.sh       # Build helper script
-└── 📖 README.md              # Documentation
+google-imagebuild-packer/
+├── packer/<os>/          Packer templates
+├── ansible/<os>/        Linux playbooks / roles (Windows uses ansible/windows/*.ps1)
+├── terraform/<os>/      VM + firewall + SA per golden image
+├── scripts/             validate-all.sh, preflight-gcp.sh
+├── Makefile
+├── NOTICE               proprietary statement
+└── .github/workflows/   path-scoped CI
 ```
 
-## 🛡️ CIS Level 2 Security Features
+RHEL images use **`rhel-cloud`** (RHEL on GCP / entitlements). CentOS 7 uses **`centos-cloud`**, SSH user **`centos`**; Packer installs EPEL so `yum` can install Ansible on the builder.
 
-**🐧 Debian**: Filesystem security, network hardening, SSH security, password policies, audit logging, fail2ban protection  
-**🪟 Windows**: Password policies, UAC controls, network security, audit logging, service hardening, firewall configuration
+## Readability and quality bar
 
-## 🚀 Quick Start
+- **One OS per folder** so reviewers can read a full vertical slice without cross-file hunting.
+- **Naming** follows `packer` / `terraform` / `google` conventions (`*_httpd`, `google_compute_instance`, etc.).
+- **Before a PR:** run `make validate` (or `./scripts/validate-all.sh`).
+- **Secrets:** do not commit `terraform.tfvars`, service account JSON, or state (see `.gitignore`). Use each stack’s `terraform.tfvars.example` as a template.
 
-### Prerequisites
+## Prerequisites
+
 ```bash
-# Install tools
-brew install packer ansible terraform google-cloud-sdk
+brew install packer ansible terraform google-cloud-sdk   # mac; Linux: use your package manager
+```
 
-# Authenticate
-gcloud auth login --account=admin@cloudedgetechy.com
-gcloud config set project root-cortex-465610-p8
+```bash
+gcloud auth login
+gcloud config set project YOUR_PROJECT_ID
 gcloud auth application-default login
 ```
 
-### 🐧 Build Debian Image
+## Example: full loop on one Linux image
+
+Build the image:
+
 ```bash
-cd packer/debian
-packer init simple-apache.pkr.hcl
-packer build simple-apache.pkr.hcl
+cd packer/rhel8
+packer init httpd.pkr.hcl
+packer build httpd.pkr.hcl
 ```
 
-### 🪟 Build Windows Image
+Deploy a VM from it:
+
 ```bash
-cd packer/windows
-packer init windows-server-2016.pkr.hcl
-packer build windows-server-2016.pkr.hcl
+cd ../../terraform/rhel8
+cp terraform.tfvars.example terraform.tfvars   # set project_id, zone
+terraform init
+terraform apply
 ```
 
-### 🚀 Deploy VM
-```bash
-# Debian
-cd terraform/debian && terraform init && terraform apply
+Check:
 
-# Windows  
-cd terraform/windows && terraform init && terraform apply
+```bash
+terraform output
+curl -sS "http://$(terraform output -raw rhel8_instance_ip)/"
 ```
 
-### 🧪 Test
+Other OS folders follow the same pattern; image names are documented below.
+
+## Packer: image names
+
+| Packer folder   | Image name produced   | SSH user (builder) |
+|----------------|------------------------|--------------------|
+| packer/rhel7   | rhel7-httpd-golden     | cloud-user         |
+| packer/rhel8   | rhel8-httpd-golden     | cloud-user         |
+| packer/rhel9   | rhel9-httpd-golden     | cloud-user         |
+| packer/centos7 | centos7-httpd-golden   | centos             |
+
+Debian and Windows: see the `image_name` / `source_image` fields in the respective `.pkr.hcl` files and the matching `data "google_compute_image"` in Terraform.
+
+## Packer build commands (all OS)
+
+**Debian**
+
 ```bash
-# Debian
+cd packer/debian && packer init simple-apache.pkr.hcl && packer build simple-apache.pkr.hcl
+```
+
+**RHEL / CentOS** — swap directory (`rhel7`, `rhel8`, `rhel9`, `centos7`):
+
+```bash
+cd packer/rhel8 && packer init httpd.pkr.hcl && packer build httpd.pkr.hcl
+```
+
+**Windows**
+
+```bash
+cd packer/windows && packer init windows-server-2016.pkr.hcl && packer build windows-server-2016.pkr.hcl
+```
+
+## Terraform
+
+For each OS, `cd terraform/<os>`, copy `terraform.tfvars.example` → `terraform.tfvars` where provided, set `project_id` and `zone`, then `terraform init` and `terraform apply`.
+
+**Debian** smoke test (output name may vary — use `terraform output`):
+
+```bash
 curl http://$(terraform output -raw instance_ip)
-
-# Windows
-# Open browser to: http://$(terraform output -raw windows_instance_ip)
 ```
 
-## 🎯 Build Status
+**RHEL** stacks expose outputs such as `rhel8_instance_ip` / `rhel8_instance_url`.
 
-| OS | Status | Requirements |
-|---|---|---|
-| 🐧 **Debian 11** | ✅ **READY** | Standard GCP project (free tier) |
-| 🪟 **Windows 2016** | ⚠️ **Requires Billing** | GCP project with billing enabled |
+## Local validation (no cloud apply)
 
-## 🧹 Cleanup
 ```bash
-terraform destroy -auto-approve
+make validate
+# or
+./scripts/validate-all.sh
+./scripts/preflight-gcp.sh    # optional: paths + gcloud sanity
 ```
 
----
-**Note**: Windows VMs require billing enabled on GCP (not included in free trial). All Windows code is ready and will work immediately once billing is enabled.
+## CI (GitHub Actions)
 
-## 🎯 **Ready to Test! Here's what we've accomplished:**
+Workflows under `.github/workflows/` trigger on path changes. Packer jobs validate templates and Ansible syntax; Terraform jobs run plan/apply per your branch rules. Secret: **`GCP_SA_KEY`**. Details: [`CICD.md`](CICD.md).
 
-### ✅ **Authentication Setup Complete**
-- **Service Account**: `github-actions-sa@root-cortex-465610-p8.iam.gserviceaccount.com`
-- **Permissions**: Compute Admin + Service Account User
-- **Key Generated**: Ready for GitHub Actions
+## Operational notes
 
-### 🔐 **Next Steps for You:**
-
-1. **Add GitHub Secret**:
-   - Go to: https://github.com/anudishu/google-imagebuild-packer/settings/secrets/actions
-   - Click "New repository secret"
-   - Name: `GCP_SA_KEY`
-   - Value: Copy the entire JSON service account key from above
-   - Click "Add secret"
-
-2. **Test the Pipeline**:
-   ```bash
-   git add .
-   git commit -m "Setup CI/CD pipeline and test Debian workflow"
-   git push origin main
-   ```
-
-3. **Monitor Results**:
-   - Go to: https://github.com/anudishu/google-imagebuild-packer/actions
-   - Watch the "🐧 Packer - Debian Golden Image" workflow
-
-### 🚀 **What Will Happen**:
-1. **Push to main** → Triggers Debian Packer workflow
-2. **Packer validates** → Builds golden image
-3. **Auto-triggers** → Terraform deployment
-4. **VM deployed** → Ready to test!
-
-**Ready to add the GitHub secret and push the code?** The authentication is all set up on the GCP side! 🎉
+- WinRM build hangs: usually metadata password or firewall — use builder logs / serial console.
+- Renamed Packer image: update the matching Terraform image lookup.
+- Optional disk snapshots: set `enable_disk_snapshot_schedule` (and Windows equivalent) where defined.

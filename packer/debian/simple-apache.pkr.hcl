@@ -13,40 +13,39 @@ packer {
 
 variable "project_id" {
   type        = string
-  description = "GCP Project ID"
+  description = "GCP project"
   default     = "root-cortex-465610-p8"
 }
 
 variable "zone" {
   type        = string
-  description = "GCP Zone"
+  description = "zone for builder VM"
   default     = "us-central1-a"
 }
 
 source "googlecompute" "apache" {
-  project_id          = var.project_id
-  source_image        = "debian-11-bullseye-v20250915"  #baseOS
-  zone                = var.zone
-  machine_type        = "e2-small"
-  image_name          = "apache-simple-sumitk"
-  image_family        = "apache-simple"
-  image_description   = "Simple Apache image with basic monitoring"
-  
-  ssh_username        = "packer"
-  ssh_timeout         = "20m"
-  disk_size           = 10
-  disk_type           = "pd-standard"
-  
+  project_id        = var.project_id
+  source_image      = "debian-11-bullseye-v20250915"
+  zone              = var.zone
+  machine_type      = "e2-small"
+  image_name        = "apache-simple-sumitk"
+  image_family      = "apache-simple"
+  image_description = "Simple Apache image with basic monitoring"
+
+  ssh_username = "packer"
+  ssh_timeout  = "20m"
+  disk_size    = 10
+  disk_type    = "pd-standard"
+
   metadata = {
     enable-oslogin = "TRUE"
   }
 }
 
 build {
-  name = "apache-simple"
+  name    = "apache-simple"
   sources = ["source.googlecompute.apache"]
 
-  # Install Ansible
   provisioner "shell" {
     inline = [
       "sudo apt-get update",
@@ -54,7 +53,6 @@ build {
     ]
   }
 
-  # Run Ansible playbook
   provisioner "ansible" {
     playbook_file = "../../ansible/debian/simple-playbook.yml"
     extra_arguments = [

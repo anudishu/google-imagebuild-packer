@@ -1,9 +1,15 @@
-# Terraform
+# Terraform — never commit real variable files or state
 *.tfstate
 *.tfstate.*
 *.tfvars.backup
 .terraform/
-.terraform.lock.hcl
+terraform.tfvars
+*.auto.tfvars
+
+# GCP keys / creds
+*-sa-key.json
+*credentials*.json
+**/gcp-*.json
 
 # Packer
 packer_cache/

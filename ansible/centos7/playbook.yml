@@ -1,0 +1,26 @@
+---
+- name: centos7 httpd image
+  hosts: all
+  become: true
+
+  vars:
+    httpd_service_name: httpd
+    firewall_http_enabled: true
+
+  pre_tasks:
+    - name: libselinux-python for seboolean
+      ansible.builtin.yum:
+        name:
+          - libselinux-python
+        state: present
+
+  roles:
+    - role: httpd_centos7
+
+  post_tasks:
+    - name: wait for port 80
+      ansible.builtin.wait_for:
+        host: 127.0.0.1
+        port: 80
+        timeout: 120
+        delay: 5

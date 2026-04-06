@@ -1,4 +1,4 @@
-# Test VM from the debian packer image (name in data source must match packer).
+# Test VM from centos7 packer image (name in data source = packer image_name).
 
 terraform {
   required_providers {
@@ -15,24 +15,23 @@ provider "google" {
 }
 
 variable "project_id" {
-  description = "gcp project id where the image + vm live"
+  description = "gcp project"
   type        = string
 }
 
 variable "zone" {
-  description = "zone for the VM"
+  description = "zone for the vm"
   type        = string
   default     = "us-central1-a"
 }
 
-data "google_compute_image" "apache" {
-  name    = "apache-simple-sumitk"
+data "google_compute_image" "centos7_httpd" {
+  name    = "centos7-httpd-golden"
   project = var.project_id
 }
 
-# demo only: 0.0.0.0/0
 resource "google_compute_firewall" "allow_http" {
-  name    = "allow-http"
+  name    = "allow-http-centos7-httpd"
   network = "default"
   project = var.project_id
 
@@ -42,19 +41,19 @@ resource "google_compute_firewall" "allow_http" {
   }
 
   source_ranges = ["0.0.0.0/0"]
-  target_tags   = ["http-server"]
+  target_tags   = ["http-server-centos7"]
 }
 
-resource "google_compute_instance" "apache" {
-  name         = "apache-instance"
+resource "google_compute_instance" "centos7_httpd" {
+  name         = "centos7-httpd-instance"
   machine_type = "e2-small"
   zone         = var.zone
 
   boot_disk {
-    device_name = "apache-boot-disk"
+    device_name = "centos7-httpd-boot-disk"
     initialize_params {
-      image = data.google_compute_image.apache.self_link
-      size  = 10
+      image = data.google_compute_image.centos7_httpd.self_link
+      size  = 20
       type  = "pd-standard"
     }
   }
@@ -62,15 +61,14 @@ resource "google_compute_instance" "apache" {
   network_interface {
     network = "default"
     access_config {
-      // Ephemeral public IP
     }
   }
 
-  tags   = ["http-server"]
+  tags   = ["http-server-centos7"]
   labels = local.standard_labels
 
   service_account {
-    email = google_service_account.apache_vm.email
+    email = google_service_account.centos7_vm.email
     scopes = [
       "https://www.googleapis.com/auth/cloud-platform",
       "https://www.googleapis.com/auth/monitoring.write",
@@ -83,10 +81,10 @@ resource "google_compute_instance" "apache" {
   }
 }
 
-output "instance_ip" {
-  value = google_compute_instance.apache.network_interface[0].access_config[0].nat_ip
+output "centos7_instance_ip" {
+  value = google_compute_instance.centos7_httpd.network_interface[0].access_config[0].nat_ip
 }
 
-output "instance_url" {
-  value = "http://${google_compute_instance.apache.network_interface[0].access_config[0].nat_ip}"
+output "centos7_instance_url" {
+  value = "http://${google_compute_instance.centos7_httpd.network_interface[0].access_config[0].nat_ip}"
 }

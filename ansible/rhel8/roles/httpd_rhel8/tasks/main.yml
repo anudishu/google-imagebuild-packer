@@ -1,0 +1,55 @@
+---
+- name: Install httpd and firewall bits
+  ansible.builtin.dnf:
+    name:
+      - httpd
+      - firewalld
+      - policycoreutils-python-utils
+    state: present
+
+- name: Enable and start firewalld before opening ports
+  ansible.builtin.systemd:
+    name: firewalld
+    enabled: true
+    state: started
+
+- name: Open http in firewalld
+  ansible.builtin.shell: |
+    firewall-cmd --permanent --add-service=http || true
+    firewall-cmd --reload || true
+  changed_when: true
+
+- name: Allow httpd to bind / network (selinux)
+  ansible.builtin.seboolean:
+    name: httpd_can_network_connect
+    state: true
+    persistent: true
+
+- name: Drop index page from template
+  ansible.builtin.template:
+    src: index.html.j2
+    dest: /var/www/html/index.html
+    owner: root
+    group: root
+    mode: "0644"
+    setype: httpd_sys_content_t
+  notify: Restart httpd
+
+- name: health check script
+  ansible.builtin.copy:
+    dest: /usr/local/bin/health-check-httpd.sh
+    mode: "0755"
+    content: |
+      #!/bin/bash
+      if systemctl is-active --quiet {{ httpd_service_name }}; then
+        echo "httpd running"
+        exit 0
+      fi
+      echo "httpd not running"
+      exit 1
+
+- name: Enable and start httpd
+  ansible.builtin.systemd:
+    name: "{{ httpd_service_name }}"
+    enabled: true
+    state: started

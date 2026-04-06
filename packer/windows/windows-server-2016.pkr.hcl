@@ -26,27 +26,27 @@ variable "source_image" {
 }
 
 source "googlecompute" "windows" {
-  project_id          = var.project_id
-  source_image        = var.source_image
+  project_id              = var.project_id
+  source_image            = var.source_image
   source_image_project_id = ["windows-cloud"]
-  zone                = var.zone
-  machine_type        = "n1-standard-2"
-  image_name          = "windows-server-2016-hardened-{{timestamp}}"
-  image_family        = "windows-server-2016-hardened"
-  image_description   = "Windows Server 2016 with CIS hardening and IIS"
+  zone                    = var.zone
+  machine_type            = "n1-standard-2"
+  image_name              = "windows-server-2016-hardened-{{timestamp}}"
+  image_family            = "windows-server-2016-hardened"
+  image_description       = "Windows Server 2016 with CIS hardening and IIS"
 
-  disk_size           = 50
-  disk_type           = "pd-standard"
+  disk_size = 50
+  disk_type = "pd-standard"
 
   # Windows-specific settings
-  communicator        = "winrm"
-  winrm_username      = "packer"
-  winrm_insecure      = true
-  winrm_use_ssl       = true
-  winrm_timeout       = "30m"
+  communicator   = "winrm"
+  winrm_username = "packer"
+  winrm_insecure = true
+  winrm_use_ssl  = true
+  winrm_timeout  = "30m"
 
   metadata = {
-    enable-oslogin = "FALSE"
+    enable-oslogin             = "FALSE"
     windows-startup-script-ps1 = <<-EOT
       # Enable WinRM for Packer
       winrm quickconfig -q
@@ -65,7 +65,7 @@ source "googlecompute" "windows" {
 }
 
 build {
-  name = "windows-server-2016"
+  name    = "windows-server-2016"
   sources = ["source.googlecompute.windows"]
 
   # Wait for Windows to be ready

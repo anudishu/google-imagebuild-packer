@@ -1,3 +1,6 @@
+# Windows 2016 IIS sample — pulls golden image by family name from packer publish step.
+# Billing must be on; machine type is kinda fat for a hello-world.
+
 terraform {
   required_providers {
     google = {
@@ -43,8 +46,10 @@ resource "google_compute_instance" "windows" {
   zone         = var.zone
   name         = "windows-server-2016-instance"
   machine_type = "n1-standard-2"
+  labels       = local.standard_labels
 
   boot_disk {
+    device_name = "windows-boot-disk"
     initialize_params {
       image = data.google_compute_image.windows.self_link
       size  = 50
@@ -63,7 +68,7 @@ resource "google_compute_instance" "windows" {
 
   metadata = {
     enable-oslogin = "FALSE"
-    # Set initial password for Windows
+    # inline startup — quick rdp enable; replace with your real bootstrap later
     windows-startup-script-ps1 = <<-EOT
       # Configure initial settings
       Write-Host "Windows instance starting up..."
@@ -118,7 +123,7 @@ resource "google_compute_firewall" "allow_https_windows" {
   target_tags   = ["https-server"]
 }
 
-# Firewall rule for RDP traffic (restricted to specific IP ranges for security)
+# RDP — wide open on purpose for the lab; your security team will yell if you ship this to prod
 resource "google_compute_firewall" "allow_rdp_windows" {
   project = var.project_id
   name    = "allow-rdp-windows"
@@ -129,9 +134,7 @@ resource "google_compute_firewall" "allow_rdp_windows" {
     ports    = ["3389"]
   }
 
-  # Restrict RDP access to specific IP ranges for security
-  # Update these ranges according to your security requirements
-  source_ranges = ["0.0.0.0/0"]  # Change this to your specific IP ranges
+  source_ranges = ["0.0.0.0/0"]
   target_tags   = ["rdp-server"]
 }
 

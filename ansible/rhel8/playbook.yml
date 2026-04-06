@@ -1,0 +1,35 @@
+---
+- name: rhel8 httpd image
+  hosts: all
+  become: true
+
+  vars:
+    httpd_service_name: httpd
+    firewall_http_enabled: true
+
+  pre_tasks:
+    - name: dnf makecache (ignore errors)
+      ansible.builtin.dnf:
+        update_cache: true
+      changed_when: false
+      failed_when: false
+
+    - name: python3 + selinux bindings
+      ansible.builtin.dnf:
+        name:
+          - python3
+          - python3-libselinux
+        state: present
+
+  roles:
+    - role: httpd_rhel8
+
+  post_tasks:
+    - name: http 200 on localhost
+      ansible.builtin.uri:
+        url: http://127.0.0.1/
+        status_code: 200
+      register: rhel8_http_check
+      retries: 3
+      delay: 5
+      until: rhel8_http_check.status == 200
